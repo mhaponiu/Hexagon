@@ -281,14 +281,19 @@ public class PlanszaComponent extends JComponent {
 		public void mouseClicked(MouseEvent event) {
 			roboczy = find(event.getPoint());
 			if (roboczy == null)
-				System.out.println("kliknales poza planszą");
+				System.out.println("PlanszaComponent: kliknales poza planszą");
 			else {
 				try {
 					kontroler.click((int) roboczy.getPozycja().getX(),
 							(int) roboczy.getPozycja().getY());
 				} catch (NullPointerException e) {
-					click((int) roboczy.getPozycja().getX(), (int) roboczy
-							.getPozycja().getY());
+					/*
+					 * gdy nie mam podłączonego kontrolera, raczej do testów tylko
+					 */
+					int x = (int) roboczy.getPozycja().getX();
+					int y = (int) roboczy.getPozycja().getY();
+					System.out.printf("PlanszaComponent: kliknięto na [%d][%d]\n", x, y);
+					zapal(Kolor.GRACZ1, x, y);
 				}
 
 			}
