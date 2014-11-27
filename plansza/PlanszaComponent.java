@@ -1,6 +1,7 @@
 package plansza;
 
 import javax.swing.*;
+
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -9,6 +10,8 @@ import java.awt.geom.Point2D.Float;
 import java.util.ArrayList;
 
 public class PlanszaComponent extends JComponent {
+	Click kontroler;
+
 	private static final int DEFAULT_WIDTH = 560;
 	private static final int DEFAULT_HEIGHT = 600;
 	private static final int PIONEK = Pole.getSkala();
@@ -21,7 +24,7 @@ public class PlanszaComponent extends JComponent {
 	private ArrayList<Pole> puste;
 	private ArrayList<Point2D> pionki1;
 	private ArrayList<Point2D> pionki2;
-	
+
 	private static final Color SZARY = new Color(198, 206, 206);
 	private static final Color JASNYZOLTY = new Color(255, 255, 130);
 	private static final Color JASNYZIELONY = new Color(159, 251, 160);
@@ -38,8 +41,17 @@ public class PlanszaComponent extends JComponent {
 		puste.add(pola[4][3]);
 		puste.add(pola[3][4]);
 		puste.add(pola[5][4]);
-	
+
 		addMouseListener(new MouseHandler());
+	}
+
+	public PlanszaComponent(Click kontr) {
+		super();
+		kontroler = kontr;
+	}
+	
+	public void setKontroler(Click kontr){
+		kontroler = kontr;
 	}
 
 	public void paintComponent(Graphics g) {
@@ -80,21 +92,25 @@ public class PlanszaComponent extends JComponent {
 		}
 		// rysuje pionki
 		g2.setPaint(Color.RED);
-		for (Point2D p : pionki1){
-			g2.fillOval((int)p.getX()-(PIONEK/2),(int)p.getY()-(PIONEK/2), PIONEK, PIONEK);
+		for (Point2D p : pionki1) {
+			g2.fillOval((int) p.getX() - (PIONEK / 2), (int) p.getY()
+					- (PIONEK / 2), PIONEK, PIONEK);
 		}
 		g2.setPaint(Color.BLUE);
-		for (Point2D p : pionki2){
-			g2.fillOval((int)p.getX()-(PIONEK/2),(int)p.getY()-(PIONEK/2), PIONEK, PIONEK);
+		for (Point2D p : pionki2) {
+			g2.fillOval((int) p.getX() - (PIONEK / 2), (int) p.getY()
+					- (PIONEK / 2), PIONEK, PIONEK);
 		}
-		//obrysy pionkow
+		// obrysy pionkow
 		g2.setPaint(Color.BLACK);
-		for (Point2D p : pionki1){
-			g2.drawOval((int)p.getX()-(PIONEK/2),(int)p.getY()-(PIONEK/2), PIONEK, PIONEK);
+		for (Point2D p : pionki1) {
+			g2.drawOval((int) p.getX() - (PIONEK / 2), (int) p.getY()
+					- (PIONEK / 2), PIONEK, PIONEK);
 		}
 		g2.setPaint(Color.BLACK);
-		for (Point2D p : pionki2){
-			g2.drawOval((int)p.getX()-(PIONEK/2),(int)p.getY()-(PIONEK/2), PIONEK, PIONEK);
+		for (Point2D p : pionki2) {
+			g2.drawOval((int) p.getX() - (PIONEK / 2), (int) p.getY()
+					- (PIONEK / 2), PIONEK, PIONEK);
 		}
 
 	}
@@ -184,7 +200,8 @@ public class PlanszaComponent extends JComponent {
 	}
 
 	public void zapal(Kolor k, int x, int y) {
-		//usuwam z list jakby pole juz mialo jakis kolor zebym mogl je zamalować
+		// usuwam z list jakby pole juz mialo jakis kolor zebym mogl je
+		// zamalować
 		zolte.remove(pola[x][y]);
 		zielone.remove(pola[x][y]);
 		puste.remove(pola[x][y]);
@@ -200,11 +217,13 @@ public class PlanszaComponent extends JComponent {
 			zaznaczone.add(pola[x][y]);
 			break;
 		case GRACZ1:
-			if(pionki2.contains(pola[x][y].getPkt())) pionki2.remove(pola[x][y].getPkt());
+			if (pionki2.contains(pola[x][y].getPkt()))
+				pionki2.remove(pola[x][y].getPkt());
 			pionki1.add(pola[x][y].getPkt());
 			break;
 		case GRACZ2:
-			if(pionki1.contains(pola[x][y].getPkt())) pionki1.remove(pola[x][y].getPkt());
+			if (pionki1.contains(pola[x][y].getPkt()))
+				pionki1.remove(pola[x][y].getPkt());
 			pionki2.add(pola[x][y].getPkt());
 			break;
 		case PUSTY:
@@ -252,12 +271,10 @@ public class PlanszaComponent extends JComponent {
 	}
 
 	private void click(int x, int y) {
-		System.out.printf("kliknięto na [%d][%d]\n", x, y);
-		Point2D.Float pozycja = new Point2D.Float((int) x, (int) y);
 
-		//zgasWszystkie(Kolor.ZIELONY);
-		zapal(Kolor.GRACZ1, (int)pozycja.getX(), (int)pozycja.getY());
-		//reset();
+		System.out.printf("PlanszaComponent: kliknięto na [%d][%d]\n", x, y);
+		Point2D.Float pozycja = new Point2D.Float((int) x, (int) y);
+		zapal(Kolor.GRACZ1, (int) pozycja.getX(), (int) pozycja.getY());
 	}
 
 	private class MouseHandler extends MouseAdapter {
@@ -266,8 +283,14 @@ public class PlanszaComponent extends JComponent {
 			if (roboczy == null)
 				System.out.println("kliknales poza planszą");
 			else {
-				click((int) roboczy.getPozycja().getX(), (int) roboczy
-						.getPozycja().getY());
+				try {
+					kontroler.click((int) roboczy.getPozycja().getX(),
+							(int) roboczy.getPozycja().getY());
+				} catch (NullPointerException e) {
+					click((int) roboczy.getPozycja().getX(), (int) roboczy
+							.getPozycja().getY());
+				}
+
 			}
 		}
 	}
