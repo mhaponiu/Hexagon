@@ -1,4 +1,4 @@
-package pl.edu.pw.elka.hexagon.plansza;
+package pl.edu.pw.elka.hexagon.widok;
 
 import java.awt.*;
 import java.awt.geom.Point2D;

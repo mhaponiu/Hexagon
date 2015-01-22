@@ -3,132 +3,115 @@ package pl.edu.pw.elka.hexagon.model;
 import java.util.Collection;
 import java.util.LinkedList;
 
-import pl.edu.pw.elka.hexagon.plansza.Click;
-import pl.edu.pw.elka.hexagon.plansza.Kolor;
-import pl.edu.pw.elka.hexagon.plansza.PlanszaComponent;
+import pl.edu.pw.elka.hexagon.widok.Kolor;
+import pl.edu.pw.elka.hexagon.widok.Widok;
 
 /**
- * 
- * @author Michal Zurawski
- *
+ * @author Michał Żurawki
  */
-public class Model implements Click
+public class Model
 {
-	private static final int SIZE = 9;
-	private PlanszaComponent widok;
+	private static final int ROZMIAR = 9;
 	private final Collection<Punkt> zaznaczone = new LinkedList<>();
-	private final Kolor[][] plansza = new Kolor[SIZE][SIZE];
+	private Plansza plansza = new Plansza(ROZMIAR);
+	private Widok widok;
+	private Punkt ostatniKliknietyPunkt;
 
-	public void click(int x, int y)
+	public void zaznaczono(int x, int y)
 	{
-		final Punkt klikniety = new Punkt(x, y);
-		if (zaznaczone.isEmpty())
+		final Punkt kliknietyPunkt = new Punkt(x, y);
+		if (pierwszeKlikniecie())
 		{
-			zaznaczone.add(klikniety);
-			widok.zapal(Kolor.ZAZNACZONY, x, y);
-
-			final Collection<Punkt> sasiedzi = getSasiedzi(klikniety);
-			zaznaczone.addAll(sasiedzi);
-			for (final Punkt punkt : sasiedzi)
+			if (wybranoCzerwonego(kliknietyPunkt))
 			{
-				widok.zapal(Kolor.ZIELONY, punkt.x, punkt.y);
-			}
-
-			final Collection<Punkt> skoki = getSkoki(klikniety);
-			zaznaczone.addAll(skoki);
-			for (final Punkt punkt : skoki)
-			{
-				widok.zapal(Kolor.ZOLTY, punkt.x, punkt.y);
+				ostatniKliknietyPunkt = kliknietyPunkt;
+				podswietlDostepnePola(kliknietyPunkt);
 			}
 		}
-		else if (zaznaczone.contains(klikniety))
+		else if (moznaWybracPunkt(kliknietyPunkt))
 		{
-			widok.zgasWszystkie(Kolor.ZIELONY);
-			widok.zgasWszystkie(Kolor.ZAZNACZONY);
-			widok.zgasWszystkie(Kolor.ZOLTY);
 			zaznaczone.clear();
+			if (kliknietyPunkt.equals(ostatniKliknietyPunkt))
+			{
+				wyslijPlansze();
+				return;
+			}
+			final Ruch ruchGracza = new Ruch(ostatniKliknietyPunkt, kliknietyPunkt);
+			plansza.przesunCzerwonego(ruchGracza);
+			wyslijPlansze();
+			ruchKomputera();
+			wyslijPlansze();
 		}
 	}
 
 	public void inicjalizujPlansze()
 	{
-		widok.czysc();
-		for (Kolor[] kolory : plansza)
-		{
-			for (Kolor kolor : kolory)
-			{
-			}
-		}
-		widok.zapal(Kolor.PUSTY, 4, 3);
-		widok.zapal(Kolor.PUSTY, 3, 4);
-		widok.zapal(Kolor.PUSTY, 5, 5);
-		widok.zapal(Kolor.GRACZ1, 0, 0);
-		widok.zapal(Kolor.GRACZ1, 4, 8);
-		widok.zapal(Kolor.GRACZ1, 8, 4);
-		widok.zapal(Kolor.GRACZ2, 4, 0);
-		widok.zapal(Kolor.GRACZ2, 0, 4);
-		widok.zapal(Kolor.GRACZ2, 8, 8);
+		plansza.inicjalizujPlansze();
+		wyslijPlansze();
 	}
 
-	public void rejestrujPlansze(final PlanszaComponent plansza)
+	public void setWidok(final Widok widok)
 	{
-		this.widok = plansza;
-	}
-
-	private Collection<Punkt> getSasiedzi(final Punkt punkt)
-	{
-		final Collection<Punkt> sasiedzi = new LinkedList<>();
-		sasiedzi.add(new Punkt(punkt.x - 1, punkt.y));
-		sasiedzi.add(new Punkt(punkt.x + 1, punkt.y));
-		sasiedzi.add(new Punkt(punkt.x - 1, punkt.y - 1));
-		sasiedzi.add(new Punkt(punkt.x + 1, punkt.y + 1));
-		sasiedzi.add(new Punkt(punkt.x, punkt.y - 1));
-		sasiedzi.add(new Punkt(punkt.x, punkt.y + 1));
-		return usunZlePunkty(sasiedzi);
-	}
-
-	private Collection<Punkt> getSkoki(final Punkt punkt)
-	{
-		final Collection<Punkt> skoki = new LinkedList<>();
-		skoki.add(new Punkt(punkt.x - 2, punkt.y));
-		skoki.add(new Punkt(punkt.x + 2, punkt.y));
-		skoki.add(new Punkt(punkt.x - 2, punkt.y - 1));
-		skoki.add(new Punkt(punkt.x + 2, punkt.y + 1));
-		skoki.add(new Punkt(punkt.x - 2, punkt.y - 2));
-		skoki.add(new Punkt(punkt.x + 2, punkt.y + 2));
-		skoki.add(new Punkt(punkt.x - 1, punkt.y - 2));
-		skoki.add(new Punkt(punkt.x + 1, punkt.y + 2));
-		skoki.add(new Punkt(punkt.x, punkt.y - 2));
-		skoki.add(new Punkt(punkt.x, punkt.y + 2));
-		skoki.add(new Punkt(punkt.x + 1, punkt.y - 1));
-		skoki.add(new Punkt(punkt.x - 1, punkt.y + 1));
-		return usunZlePunkty(skoki);
+		this.widok = widok;
 	}
 	
-	private Collection<Punkt> usunZlePunkty(final Collection<Punkt> punkty)
+	private void ruchKomputera()
 	{
-		final Collection<Punkt> punktyPrawidlowe = new LinkedList<>();
-		for (final Punkt punkt : punkty)
+		final Drzewo drzewo = new Drzewo(plansza, 5);
+		plansza = drzewo.buduj();
+//		System.out.println(drzewo.buduj());
+//		System.out.println(drzewo);
+	}
+	
+	private boolean moznaWybracPunkt(final Punkt punkt)
+	{
+		return zaznaczone.contains(punkt);
+	}
+
+	private void podswietlDostepnePola(final Punkt punktDoPodswietlenia)
+	{
+		zaznaczone.add(punktDoPodswietlenia);
+		widok.zapal(Kolor.ZAZNACZONY, punktDoPodswietlenia.x, punktDoPodswietlenia.y);
+
+		final Collection<Punkt> sasiedzi = plansza.podajWolnychSasiadow(punktDoPodswietlenia);
+		zaznaczone.addAll(sasiedzi);
+		for (final Punkt punkt : sasiedzi)
 		{
-			if (punkt.x >= 0 && punkt.y >= 0 && punkt.x < SIZE && punkt.y < SIZE)
-			{
-				final int POLOWA = SIZE / 2;
-				if (punkt.x > POLOWA)
-				{
-					if (punkt.x - POLOWA <= punkt.y)
-					{
-						punktyPrawidlowe.add(punkt);	
-					}
-				}
-				else
-				{
-					if (punkt.y - POLOWA <= punkt.x)
-					{
-						punktyPrawidlowe.add(punkt);	
-					}
-				}
-			}
+			widok.zapal(Kolor.ZIELONY, punkt.x, punkt.y);
 		}
-		return punktyPrawidlowe;
+
+		final Collection<Punkt> skoki = plansza.podajDozwoloneSkoki(punktDoPodswietlenia);
+		zaznaczone.addAll(skoki);
+		for (final Punkt punkt : skoki)
+		{
+			widok.zapal(Kolor.ZOLTY, punkt.x, punkt.y);
+		}
+	}
+
+	private void wyslijPlansze()
+	{
+		widok.czysc();
+		for (final Punkt punkt : Plansza.podajDziury())
+		{
+			widok.zapal(Kolor.PUSTY, punkt.x, punkt.y);
+		}
+		for (final Punkt punkt : plansza.podajCzerwone())
+		{
+			widok.zapal(Kolor.GRACZ1, punkt.x, punkt.y);
+		}
+		for (final Punkt punkt : plansza.podajNiebieskie())
+		{
+			widok.zapal(Kolor.GRACZ2, punkt.x, punkt.y);
+		}
+	}
+
+	private boolean pierwszeKlikniecie()
+	{
+		return zaznaczone.isEmpty();
+	}
+
+	private boolean wybranoCzerwonego(final Punkt punkt)
+	{
+		return plansza.podajCzerwone().contains(punkt);
 	}
 }

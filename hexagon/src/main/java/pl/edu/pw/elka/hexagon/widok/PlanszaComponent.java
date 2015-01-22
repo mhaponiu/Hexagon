@@ -1,4 +1,4 @@
-package pl.edu.pw.elka.hexagon.plansza;
+package pl.edu.pw.elka.hexagon.widok;
 
 import java.awt.Color;
 import java.awt.Dimension;
@@ -24,7 +24,7 @@ public class PlanszaComponent extends JComponent
 	private static final int DEFAULT_HEIGHT = 600;
 	private static final int PIONEK = Pole.getSkala();
 
-	private final Click kontroler;
+	private Widok widok;
 	private final Pole[][] pola = createPlanszaHexagon();
 	private Pole roboczy;
 	private final List<Pole> zielone = new ArrayList<>();
@@ -40,11 +40,15 @@ public class PlanszaComponent extends JComponent
 	private static final Color JASNYZIELONY = new Color(159, 251, 160);
 	private static final Color CIEMNYSZARY = new Color(160, 160, 160);
 
-	public PlanszaComponent(final Click kontr)
+	public PlanszaComponent()
 	{
 		super();
 		addMouseListener(new MouseHandler());
-		kontroler = kontr;
+	}
+	
+	public void setWidok(final Widok widok)
+	{
+		this.widok = widok;
 	}
 
 	public void czysc()
@@ -159,25 +163,6 @@ public class PlanszaComponent extends JComponent
 			}
 		}
 
-		/*
-		 * // tworzę postrzępioną tablicę for (int i = 0; i <= 4; i++) { polehex[i] = new Pole[i + 5];
-		 * System.out.println("wiersz:" + (i + 1) + "  komórek:" + (i + 5)); } // druga połowa for (int i = 5, k = 0; i
-		 * <= 8; i++, k++) { polehex[i] = new Pole[8 - k]; System.out.println("wiersz:" + (i + 1) + "  komórek:" + (8 -
-		 * k)); } // uzupełniam tablice polami - brzydki kod ale działa; nie czytać Pole init = new Pole(new
-		 * Point2D.Float(100, 6 * Pole.getSkala())); // pierwsze 5 wierszy najpierw polehex[0][0] = init;
-		 * polehex[0][0].setPozycja(0, 0); Pole tmp = init; for (int k = 0; k <= 4; k++) { for (int i = 0; i < k + 5;
-		 * i++) { if (k == 0 && i == 0) continue; if (i == 0) continue; polehex[k][i] = Pole.newPrawoGora(tmp);
-		 * polehex[k][i].setPozycja(k, i); tmp = polehex[k][i]; } if (k == 0) { polehex[1][0] =
-		 * Pole.newDol(polehex[0][0]); polehex[1][0].setPozycja(1, 0); tmp = polehex[1][0]; continue; } if (k == 4)
-		 * break; polehex[k + 1][0] = Pole.newDol(polehex[k][0]); polehex[k + 1][0].setPozycja(k + 1, 0); tmp =
-		 * polehex[k + 1][0]; } // teraz druga połowa od 5 wiersza do 9 polehex[5][0] = Pole.newPrawoDol(polehex[4][0]);
-		 * polehex[5][0].setPozycja(5, 0); tmp = polehex[5][0]; for (int k = 5; k <= 8; k++) { for (int i = 0; i < 13 -
-		 * k; i++) { if (i == 0) continue; polehex[k][i] = Pole.newPrawoGora(tmp); polehex[k][i].setPozycja(k, i); tmp =
-		 * polehex[k][i]; } if (k == 5) { polehex[6][0] = Pole.newPrawoDol(polehex[5][0]); polehex[6][0].setPozycja(6,
-		 * 0); tmp = polehex[6][0]; continue; } if (k == 8) break; polehex[k + 1][0] = Pole.newPrawoDol(polehex[k][0]);
-		 * polehex[k + 1][0].setPozycja(k + 1, 0); tmp = polehex[k + 1][0]; }
-		 */
-
 		return polehex;
 	}
 
@@ -233,6 +218,11 @@ public class PlanszaComponent extends JComponent
 				break;
 		}
 		repaint();
+	}
+	
+	public void zgasPionki1(int x, int y)
+	{
+		pionki1.remove(pola[x][y].getPkt());
 	}
 
 	public void zgasWszystkie(Kolor k)
@@ -294,15 +284,6 @@ public class PlanszaComponent extends JComponent
 		});
 	}
 
-	// TODO: usunąć?
-	private void click(int x, int y)
-	{
-
-		System.out.printf("PlanszaComponent: kliknięto na [%d][%d]\n", x, y);
-		Point2D.Float pozycja = new Point2D.Float((int) x, (int) y);
-		zapal(Kolor.GRACZ1, (int) pozycja.getX(), (int) pozycja.getY());
-	}
-
 	private class MouseHandler extends MouseAdapter
 	{
 		public void mouseClicked(MouseEvent event)
@@ -314,7 +295,7 @@ public class PlanszaComponent extends JComponent
 			{
 				try
 				{
-					kontroler.click((int) roboczy.getPozycja().getX(), (int) roboczy.getPozycja().getY());
+					widok.click((int) roboczy.getPozycja().getX(), (int) roboczy.getPozycja().getY());
 				}
 				catch (NullPointerException e)
 				{
